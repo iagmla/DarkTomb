@@ -453,16 +453,9 @@ void sign_hash_write(struct qloq_ctx *Sctx, char *filename) {
     BIGNUM *H;
     H = BN_new();
     qx_hash_file(filename, h);
-    for (int i = 0; i < 32; i++) {
-        printf("%02X", h[i]);
-    }
     printf("\n");
     urandom(nonce, 32);
     mypad_encrypt(h, nonce, X);
-    for (int i = 0; i < 32; i++) {
-        printf("%02X", X[i]);
-    }
-    printf("\n");
     BN_bin2bn(X, 32, H);
     sign(Sctx, S, H);
     BN_bn2bin(S, sig);
@@ -487,11 +480,6 @@ void verify_sig_read(struct qloq_ctx *Sctx, char *filename) {
     H = BN_new();
     FILE *infile;
     qx_hash_file_offset(filename, h, (S_len + 32));
-    for (int i = 0; i < 32; i++) {
-        printf("%02X", h[i]);
-    }
-    printf("\n");
-    BN_bin2bn(h, 32, H);
     infile = fopen(filename, "rb");
     fseek(infile, 0, SEEK_END);
     uint64_t datalen = ftell(infile);
@@ -503,14 +491,11 @@ void verify_sig_read(struct qloq_ctx *Sctx, char *filename) {
     fclose(infile);
     BN_bin2bn(sig, S_len, Ssig);
     mypad_encrypt(nonce, h, X);
-    for (int i = 0; i < 32; i++) {
-        printf("%02X", X[i]);
-    }
-    printf("\n");
+    BN_bin2bn(X, 32, H);
 
-    if (verify(Sctx, Ssig, X) != 0) {
+    if (verify(Sctx, Ssig, H) != 0) {
         printf("Error: PK Signature verification failed. Message is not authentic.\n");
-        //exit(2);
+        exit(2);
     }
 }
 

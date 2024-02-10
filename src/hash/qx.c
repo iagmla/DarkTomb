@@ -358,7 +358,7 @@ int qx_hmac_file_read_verify_offset(char *filename, uint8_t *key, int offset) {
     fseek(infile, 0, SEEK_END);
     uint64_t datalen = ftell(infile);
     fseek(infile, 0, 0);
-    uint64_t mac_pos = datalen - 32;
+    uint64_t mac_pos = datalen - 32 - offset;
     datalen = datalen - 32;
     fseek(infile, mac_pos, 0);
     uint64_t pos = ftell(infile);
@@ -441,3 +441,76 @@ void qx_crypt(char * in, char *out, uint8_t * key) {
     fclose(infile);
     fclose(outfile);
 }
+
+void sign_hash_write(struct qloq_ctx *Sctx, char *filename) {
+    int S_len = 768;
+    uint8_t sig[S_len];
+    uint8_t h[32];
+    uint8_t X[32];
+    uint8_t nonce[32];
+    BIGNUM *S;
+    S = BN_new();
+    BIGNUM *H;
+    H = BN_new();
+    qx_hash_file(filename, h);
+    for (int i = 0; i < 32; i++) {
+        printf("%02X", h[i]);
+    }
+    printf("\n");
+    urandom(nonce, 32);
+    mypad_encrypt(h, nonce, X);
+    for (int i = 0; i < 32; i++) {
+        printf("%02X", X[i]);
+    }
+    printf("\n");
+    BN_bin2bn(X, 32, H);
+    sign(Sctx, S, H);
+    BN_bn2bin(S, sig);
+    FILE *infile;
+    infile = fopen(filename, "a");
+    fwrite(nonce, 1, 32, infile);
+    fwrite(sig, 1, S_len, infile);
+    fclose(infile);
+}
+
+void verify_sig_read(struct qloq_ctx *Sctx, char *filename) {
+    int S_len = 768;
+    uint8_t sig[S_len];
+    uint8_t X[32];
+    uint8_t nonce[32];
+    uint8_t h[32];
+    BIGNUM *Ssig;
+    Ssig = BN_new();
+    BIGNUM *S;
+    S = BN_new();
+    BIGNUM *H;
+    H = BN_new();
+    FILE *infile;
+    qx_hash_file_offset(filename, h, (S_len + 32));
+    for (int i = 0; i < 32; i++) {
+        printf("%02X", h[i]);
+    }
+    printf("\n");
+    BN_bin2bn(h, 32, H);
+    infile = fopen(filename, "rb");
+    fseek(infile, 0, SEEK_END);
+    uint64_t datalen = ftell(infile);
+    uint64_t pos = datalen - S_len - 32;
+    fseek(infile, 0, SEEK_SET);
+    fseek(infile, pos, SEEK_SET);
+    fread(nonce, 1, 32, infile);
+    fread(sig, 1, S_len, infile);
+    fclose(infile);
+    BN_bin2bn(sig, S_len, Ssig);
+    mypad_encrypt(nonce, h, X);
+    for (int i = 0; i < 32; i++) {
+        printf("%02X", X[i]);
+    }
+    printf("\n");
+
+    if (verify(Sctx, Ssig, X) != 0) {
+        printf("Error: PK Signature verification failed. Message is not authentic.\n");
+        //exit(2);
+    }
+}
+

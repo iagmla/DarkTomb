@@ -10,7 +10,7 @@
 #include "ciphers/akms_cbc.c"
 
 void usage() {
-    printf("DarkTomb v0.21 - by KryptoMagick\n\n");
+    printf("DarkTomb v0.22 - by KryptoMagick\n\n");
     printf("Algorithms:\n***********\nakms-cbc         256 bit\n\n");
     printf("Usage:\ntomb <algorithm> -e <input file> <output file> <pk file> <sk file>\n");
     printf("tomb <algorithm> -d <input file> <output file> <pk file> <sk file>\n");

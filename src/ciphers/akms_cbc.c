@@ -223,7 +223,24 @@ void akms_cbc_last_inv(struct akms_state *state) {
     state->last[3] = state->next[3];
 }
 
-void akms_cbc_encrypt(char *inputfile, char *outputfile, uint8_t *key) {
+void akms_cbc_encrypt(char *inputfile, char *outputfile, char *pkfile, char *skfile) {
+    struct qloq_ctx ctx;
+    struct qloq_ctx Sctx;
+    struct qloq_ctx TMPActx;
+    struct qloq_ctx TMPBctx;
+    load_pkfile(pkfile, &ctx, &TMPActx);
+    load_skfile(skfile, &TMPBctx, &Sctx);
+    uint8_t key[32];
+    uint8_t keyctxt[768];
+    urandom(key, 32);
+    BIGNUM *bn_keyptxt;
+    BIGNUM *bn_keyctxt;
+    bn_keyptxt = BN_new();
+    bn_keyctxt = BN_new();
+    BN_bin2bn(key, 32, bn_keyptxt);
+    cloak(&ctx, bn_keyctxt, bn_keyptxt);
+    BN_bn2bin(bn_keyctxt, keyctxt);
+
     struct akms_state state;
     state.rounds = 16;
     akms_ksa(&state, key, state.rounds);
@@ -235,6 +252,7 @@ void akms_cbc_encrypt(char *inputfile, char *outputfile, uint8_t *key) {
     FILE *infile, *outfile;
     infile = fopen(inputfile, "rb");
     outfile = fopen(outputfile, "wb");
+    fwrite(keyctxt, 1, 768, outfile);
     fwrite(iv, 1, blocklen, outfile);
     fseek(infile, 0, SEEK_END);
     uint32_t datalen = ftell(infile);
@@ -265,10 +283,19 @@ void akms_cbc_encrypt(char *inputfile, char *outputfile, uint8_t *key) {
     fclose(outfile);
 }
 
-void akms_cbc_decrypt(char *inputfile, char *outputfile, uint8_t *key) {
+void akms_cbc_decrypt(char *inputfile, char *outputfile, char *pkfile, char *skfile) {
+    struct qloq_ctx ctx;
+    struct qloq_ctx Sctx;
+    struct qloq_ctx TMPActx;
+    struct qloq_ctx TMPBctx;
+    load_pkfile(pkfile, &TMPActx, &Sctx);
+    load_skfile(skfile, &ctx, &TMPBctx);
+    uint8_t key[32];
+    uint8_t keyctxt[768];
+
     struct akms_state state;
     state.rounds = 16;
-    akms_ksa(&state, key, state.rounds);
+    //akms_ksa(&state, key, state.rounds);
     int blocklen = 16;
     uint8_t iv[blocklen];
     FILE *infile, *outfile;
@@ -276,8 +303,9 @@ void akms_cbc_decrypt(char *inputfile, char *outputfile, uint8_t *key) {
     outfile = fopen(outputfile, "wb");
     fseek(infile, 0, SEEK_END);
     uint32_t datalen = ftell(infile);
-    datalen -= blocklen;
+    datalen = datalen - blocklen - 768;
     fseek(infile, 0, SEEK_SET);
+    fread(keyctxt, 1, 768, infile);
     fread(iv, 1, blocklen, infile);
     akms_load_iv(&state, iv);
     uint32_t blocks = datalen / blocklen;
@@ -285,6 +313,16 @@ void akms_cbc_decrypt(char *inputfile, char *outputfile, uint8_t *key) {
     if (extra != 0) {
        blocks += 1;
     }
+
+    BIGNUM *bn_keyptxt;
+    BIGNUM *bn_keyctxt;
+    bn_keyptxt = BN_new();
+    bn_keyctxt = BN_new();
+    BN_bin2bn(keyctxt, 768, bn_keyctxt);
+    decloak(&ctx, bn_keyptxt, bn_keyctxt);
+    BN_bn2bin(bn_keyptxt, key);
+    akms_ksa(&state, key, state.rounds);
+
     for (uint32_t b = 0; b < blocks; b++) {
         uint8_t block[16];
         fread(block, 1, blocklen, infile);

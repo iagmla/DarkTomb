@@ -231,13 +231,17 @@ void akms_cbc_encrypt(char *inputfile, char *outputfile, char *pkfile, char *skf
     load_pkfile(pkfile, &ctx, &TMPActx);
     load_skfile(skfile, &TMPBctx, &Sctx);
     uint8_t key[32];
+    uint8_t key_padded[32];
+    uint8_t pad_nonce[32];
     uint8_t keyctxt[768];
     urandom(key, 32);
+    urandom(pad_nonce, 32);
     BIGNUM *bn_keyptxt;
     BIGNUM *bn_keyctxt;
     bn_keyptxt = BN_new();
     bn_keyctxt = BN_new();
-    BN_bin2bn(key, 32, bn_keyptxt);
+    mypad_encrypt(key, pad_nonce, key_padded);
+    BN_bin2bn(key_padded, 32, bn_keyptxt);
     cloak(&ctx, bn_keyctxt, bn_keyptxt);
     BN_bn2bin(bn_keyctxt, keyctxt);
 
@@ -252,6 +256,7 @@ void akms_cbc_encrypt(char *inputfile, char *outputfile, char *pkfile, char *skf
     FILE *infile, *outfile;
     infile = fopen(inputfile, "rb");
     outfile = fopen(outputfile, "wb");
+    fwrite(pad_nonce, 1, 32, outfile);
     fwrite(keyctxt, 1, 768, outfile);
     fwrite(iv, 1, blocklen, outfile);
     fseek(infile, 0, SEEK_END);
@@ -291,11 +296,12 @@ void akms_cbc_decrypt(char *inputfile, char *outputfile, char *pkfile, char *skf
     load_pkfile(pkfile, &TMPActx, &Sctx);
     load_skfile(skfile, &ctx, &TMPBctx);
     uint8_t key[32];
+    uint8_t key_padded[32];
+    uint8_t pad_nonce[32];
     uint8_t keyctxt[768];
 
     struct akms_state state;
     state.rounds = 16;
-    //akms_ksa(&state, key, state.rounds);
     int blocklen = 16;
     uint8_t iv[blocklen];
     FILE *infile, *outfile;
@@ -303,8 +309,9 @@ void akms_cbc_decrypt(char *inputfile, char *outputfile, char *pkfile, char *skf
     outfile = fopen(outputfile, "wb");
     fseek(infile, 0, SEEK_END);
     uint32_t datalen = ftell(infile);
-    datalen = datalen - blocklen - 768;
+    datalen = datalen - blocklen - 768 - 32;
     fseek(infile, 0, SEEK_SET);
+    fread(pad_nonce, 1, 32, infile);
     fread(keyctxt, 1, 768, infile);
     fread(iv, 1, blocklen, infile);
     akms_load_iv(&state, iv);
@@ -320,7 +327,8 @@ void akms_cbc_decrypt(char *inputfile, char *outputfile, char *pkfile, char *skf
     bn_keyctxt = BN_new();
     BN_bin2bn(keyctxt, 768, bn_keyctxt);
     decloak(&ctx, bn_keyptxt, bn_keyctxt);
-    BN_bn2bin(bn_keyptxt, key);
+    BN_bn2bin(bn_keyptxt, key_padded);
+    mypad_decrypt(key_padded, pad_nonce, key);
     akms_ksa(&state, key, state.rounds);
 
     for (uint32_t b = 0; b < blocks; b++) {

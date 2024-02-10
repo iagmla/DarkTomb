@@ -446,17 +446,15 @@ void load_skfile(char *filename, struct qloq_ctx *ctx, struct qloq_ctx *Sctx) {
 */
 }
 
-void mypad_encrypt(unsigned char * msg, int msglen, unsigned char * X, int mask_bytes, unsigned char *nonce) {
-    unsigned char tmp[mask_bytes];
-    memcpy(tmp, msg, msglen);
-    for (int i = 0; i < mask_bytes; i++) {
-        X[i] = tmp[i] ^ nonce[i];
+void mypad_encrypt(uint8_t * key, uint8_t *nonce, uint8_t *X) {
+    for (int i = 0; i < 32; i++) {
+        X[i] = key[i] ^ nonce[i];
     }
 }
 
-void mypad_decrypt(unsigned char * msg, unsigned char * X, int mask_bytes, unsigned char *nonce) {
-    for (int i = 0; i < mask_bytes; i++) {
-        msg[i] = X[i] ^ nonce[i];
+void mypad_decrypt(uint8_t *nonce, uint8_t *X, uint8_t *key) {
+    for (int i = 0; i < 32; i++) {
+        key[i] = X[i] ^ nonce[i];
     }
 }
 

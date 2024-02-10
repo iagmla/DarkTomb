@@ -289,7 +289,7 @@ void akms_cbc_encrypt(char *inputfile, char *outputfile, char *pkfile, char *skf
     uint8_t kdf_key[32];
     qx_kdf(key, 32, kdf_key, 10000);
     qx_hmac_file_write(outputfile, kdf_key);
-    //sign_hash_write(&Sctx, outputfile);
+    sign_hash_write(&Sctx, outputfile);
 }
 
 void akms_cbc_decrypt(char *inputfile, char *outputfile, char *pkfile, char *skfile) {
@@ -299,7 +299,7 @@ void akms_cbc_decrypt(char *inputfile, char *outputfile, char *pkfile, char *skf
     struct qloq_ctx TMPBctx;
     load_pkfile(pkfile, &TMPActx, &Sctx);
     load_skfile(skfile, &ctx, &TMPBctx);
-    //verify_sig_read(&Sctx, inputfile);
+    verify_sig_read(&Sctx, inputfile);
     uint8_t key[32];
     uint8_t key_padded[32];
     uint8_t pad_nonce[32];
@@ -313,8 +313,8 @@ void akms_cbc_decrypt(char *inputfile, char *outputfile, char *pkfile, char *skf
     infile = fopen(inputfile, "rb");
     fseek(infile, 0, SEEK_END);
     uint32_t datalen = ftell(infile);
-    datalen = datalen - blocklen - 768 - 32 - 32;
-    //datalen = datalen - blocklen - 768 - 32 - 32 - 768;
+    //datalen = datalen - blocklen - 768 - 32 - 32;
+    datalen = datalen - blocklen - 768 - 32 - 32 - 768 - 32;
     fseek(infile, 0, SEEK_SET);
     fread(pad_nonce, 1, 32, infile);
     fread(keyctxt, 1, 768, infile);
@@ -338,8 +338,8 @@ void akms_cbc_decrypt(char *inputfile, char *outputfile, char *pkfile, char *skf
 
     uint8_t kdf_key[32];
     qx_kdf(key, 32, kdf_key, 10000);
-    if (qx_hmac_file_read_verify_offset(inputfile, kdf_key, 0) == -1) {
-    //if (qx_hmac_file_read_verify_offset(inputfile, kdf_key, (768 + 32)) == -1) {
+    //if (qx_hmac_file_read_verify_offset(inputfile, kdf_key, 0) == -1) {
+    if (qx_hmac_file_read_verify_offset(inputfile, kdf_key, (768 + 32)) == -1) {
         printf("Error: QX HMAC message is not authentic.\n");
         exit(2);
     }

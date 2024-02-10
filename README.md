@@ -2,6 +2,8 @@
 
 *** For educational use only
 
+*** Requires libssl-dev
+
 	DarkTomb is an authenticated file encryption program designed to allow two parties to exchange a file message using the public key algorithm QloQ and the symmetric algorithm AKMS in CBC mode (Advanced KryptoMagick Standard).  It works on Unix and Unix-like operating systems such as, Linux, FreeBSD and MacOS.  This document outlines the design of the program.
 
 Flow

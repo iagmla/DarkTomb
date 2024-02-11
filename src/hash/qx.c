@@ -453,7 +453,6 @@ void sign_hash_write(struct qloq_ctx *Sctx, char *filename) {
     BIGNUM *H;
     H = BN_new();
     qx_hash_file(filename, h);
-    printf("\n");
     urandom(nonce, 32);
     mypad_encrypt(h, nonce, X);
     BN_bin2bn(X, 32, H);

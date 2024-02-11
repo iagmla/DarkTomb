@@ -313,7 +313,6 @@ void akms_cbc_decrypt(char *inputfile, char *outputfile, char *pkfile, char *skf
     infile = fopen(inputfile, "rb");
     fseek(infile, 0, SEEK_END);
     uint32_t datalen = ftell(infile);
-    //datalen = datalen - blocklen - 768 - 32 - 32;
     datalen = datalen - blocklen - 768 - 32 - 32 - 768 - 32;
     fseek(infile, 0, SEEK_SET);
     fread(pad_nonce, 1, 32, infile);
@@ -338,7 +337,6 @@ void akms_cbc_decrypt(char *inputfile, char *outputfile, char *pkfile, char *skf
 
     uint8_t kdf_key[32];
     qx_kdf(key, 32, kdf_key, 10000);
-    //if (qx_hmac_file_read_verify_offset(inputfile, kdf_key, 0) == -1) {
     if (qx_hmac_file_read_verify_offset(inputfile, kdf_key, (768 + 32)) == -1) {
         printf("Error: QX HMAC message is not authentic.\n");
         exit(2);

@@ -35,28 +35,11 @@ int main(int argc, char *argv[]) {
     outfile_name = argv[4];
     pkfile_name = argv[5];
     skfile_name = argv[6];
-    if (access(infile_name, F_OK) == -1 ) {
-        printf("%s not found\n", infile_name);
-        exit(1);
-    }
-/*
-    infile = fopen(infile_name, "rb");
-    fseek(infile, 0, SEEK_END);
-    long fsize = ftell(infile);
-    fclose(infile);
-*/
-/*
-    struct termios tp, save;
-    tcgetattr(STDIN_FILENO, &tp);
-    save = tp;
-    tp.c_lflag &= ~ECHO;
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &tp);
 
-    unsigned char * passphrase[256];
-    printf("Enter secret key passphrase: ");
-    scanf("%s", passphrase);
-    tcsetattr(STDIN_FILENO, TCSANOW, &save);
-*/
+    file_present(infile_name);
+    file_present(pkfile_name);
+    file_present(skfile_name);
+
     if (strcmp(algorithm, "akms-cbc") == 0) {
         if (strcmp(mode, encrypt_symbol) == 0) {
             akms_cbc_encrypt(infile_name, outfile_name, pkfile_name, skfile_name);

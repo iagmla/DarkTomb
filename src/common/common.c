@@ -10,4 +10,4 @@ void file_present(char *filename) {
         printf("%s not found\n", filename);
         exit(1);
     }
-
+}

@@ -25,3 +25,10 @@ Key Generation:  tomb-keygen username
 
 Encryption:  tomb akms-cbc -e msg msg.enc bob.pk alice.sk
 Decryption:  tomb akms-cbc -d msg.enc msg.dec alice.pk bob.sk
+
+*** Please install libssl-dev1.1
+
+On Ubuntu:
+
+wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.0g-2ubuntu4_amd64.deb
+sudo dpkg -i libssl1.1_1.1.0g-2ubuntu4_amd64.deb

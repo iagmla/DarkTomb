@@ -15,24 +15,54 @@ void cloak(struct qloq_ctx * ctx, BIGNUM *ctxt, const BIGNUM *ptxt) {
     BN_CTX *bnctx = BN_CTX_new();
     BIGNUM *phase1;
     phase1 = BN_new();
-    BN_mod_exp(phase1, ptxt, ctx->pk, ctx->M, bnctx);
-    BN_mod_exp(ctxt, phase1, ctx->pk, ctx->n, bnctx);
+    int r0 = BN_mod_exp(phase1, ptxt, ctx->pk, ctx->M, bnctx);
+    if (r0 == 0) {
+        //printf("cloak: %d\n", r0);
+        r0 = BN_mod_exp(phase1, ptxt, ctx->pk, ctx->M, bnctx);
+    }
+    //printf("cloak: %d\n", r0);
+    int r1 = BN_mod_exp(ctxt, phase1, ctx->pk, ctx->n, bnctx);
+    if (r1 == 0) {
+        //printf("cloak: %d\n", r1);
+        r1 = BN_mod_exp(ctxt, phase1, ctx->pk, ctx->n, bnctx);
+    }
+    //printf("cloak: %d\n", r1);
 }
 
 void decloak(struct qloq_ctx * ctx, BIGNUM *ptxt, BIGNUM *ctxt) {
     BN_CTX *bnctx = BN_CTX_new();
     BIGNUM *phase1;
     phase1 = BN_new();
-    BN_mod_exp(phase1, ctxt, ctx->sk, ctx->n, bnctx);
-    BN_mod_exp(ptxt, phase1, ctx->sk, ctx->M, bnctx);
+    int r0 = BN_mod_exp(phase1, ctxt, ctx->sk, ctx->n, bnctx);
+    if (r0 == 0) {
+        //printf("decloak: %d\n", r0);
+        r0 = BN_mod_exp(phase1, ctxt, ctx->sk, ctx->n, bnctx);
+    }
+    //printf("decloak: %d\n", r0);
+    int r1 = BN_mod_exp(ptxt, phase1, ctx->sk, ctx->M, bnctx);
+    if (r1 == 0) {
+        //printf("decloak: %d\n", r1);
+        r1 = BN_mod_exp(ptxt, phase1, ctx->sk, ctx->M, bnctx);
+    }
+    //printf("decloak: %d\n", r1);
 }
 
 void sign(struct qloq_ctx * ctx, BIGNUM *S, BIGNUM *H) {
     BN_CTX *bnctx = BN_CTX_new();
     BIGNUM *phase1;
     phase1 = BN_new();
-    BN_mod_exp(phase1, H, ctx->sk, ctx->M, bnctx);
-    BN_mod_exp(S, phase1, ctx->sk, ctx->n, bnctx);
+    int r0 = BN_mod_exp(phase1, H, ctx->sk, ctx->M, bnctx);
+    if (r0 == 0) {
+        //printf("sign: %d\n", r0);
+        r0 = BN_mod_exp(phase1, H, ctx->sk, ctx->M, bnctx);
+    }
+    //printf("sign: %d\n", r0);
+    int r1 = BN_mod_exp(S, phase1, ctx->sk, ctx->n, bnctx);
+    if (r1 == 0) {
+        //printf("sign: %d\n", r1);
+        r1 = BN_mod_exp(S, phase1, ctx->sk, ctx->n, bnctx);
+    }
+    //printf("sign: %d\n", r1);
 }
 
 int verify(struct qloq_ctx * ctx, BIGNUM *S, BIGNUM *H) {
@@ -41,8 +71,18 @@ int verify(struct qloq_ctx * ctx, BIGNUM *S, BIGNUM *H) {
     BIGNUM *phase2;
     phase1 = BN_new();
     phase2 = BN_new();
-    BN_mod_exp(phase1, S, ctx->pk, ctx->n, bnctx);
-    BN_mod_exp(phase2, phase1, ctx->pk, ctx->M, bnctx);
+    int r0 = BN_mod_exp(phase1, S, ctx->pk, ctx->n, bnctx);
+    if (r0 == 0) {
+        //printf("verify: %d\n", r0);
+        r0 = BN_mod_exp(phase1, S, ctx->pk, ctx->n, bnctx);
+    }
+    //printf("verify: %d\n", r0);
+    int r1 = BN_mod_exp(phase2, phase1, ctx->pk, ctx->M, bnctx);
+    if (r1 == 0) {
+        //printf("verify: %d\n", r1);
+        r1 = BN_mod_exp(phase2, phase1, ctx->pk, ctx->M, bnctx);
+    }
+    //printf("verify: %d\n", r1);
 
     if (BN_cmp(phase2, H) == 0) {
         return 0;

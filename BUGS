@@ -1,2 +1,1 @@
-1. Signing may fail and decryption need to be retried.
-2. DarkTomb may hang on encryption or decryption. This is caused by OpenSSL BIGNUM hanging on mod_exp calls.
+1. DarkTomb may hang on encryption or decryption. This is caused by OpenSSL BIGNUM hanging on mod_exp calls.

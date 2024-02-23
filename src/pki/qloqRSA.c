@@ -345,59 +345,75 @@ void pkg_sk_bytes(struct qloq_ctx * ctx, struct qloq_ctx *Sctx, unsigned char *k
 }
 
 void load_pkfile(char *filename, struct qloq_ctx *ctx, struct qloq_ctx *Sctx) {
-    ctx->pk = BN_new();
-    ctx->n = BN_new();
-    ctx->M = BN_new();
-    Sctx->pk = BN_new();
-    Sctx->n = BN_new();
-    Sctx->M = BN_new();
-    int pksize = 4;
-    int nsize = 3;
-    int Msize = 3;
-    int Spksize = 4;
-    int Snsize = 3;
-    int SMsize = 3;
-    unsigned char *pknum[pksize];
-    unsigned char *nnum[nsize];
-    unsigned char *Mnum[nsize];
-    unsigned char *Spknum[pksize];
-    unsigned char *Snnum[nsize];
-    unsigned char *SMnum[nsize];
-    FILE *keyfile;
-    keyfile = fopen(filename, "rb");
-    fread(pknum, 1, pksize, keyfile);
-    int pkn = atoi(pknum);
-    unsigned char pk[pkn];
-    fread(pk, 1, pkn, keyfile);
-    fread(nnum, 1, nsize, keyfile);
-    int nn = atoi(nnum);
-    unsigned char n[nn];
-    fread(n, 1, nn, keyfile);
-    fread(Mnum, 1, Msize, keyfile);
-    int Mn = atoi(Mnum);
-    unsigned char M[Mn];
-    fread(M, 1, Mn, keyfile);
+    int good = 0;
+    BIGNUM *z0;
+    z0 = BN_new();
+    BN_zero(z0);
+    int c = 0;
+    while (good == 0) {
 
-    fread(Spknum, 1, Spksize, keyfile);
-    int Spkn = atoi(Spknum);
-    unsigned char Spk[Spkn];
-    fread(Spk, 1, Spkn, keyfile);
-    fread(Snnum, 1, Snsize, keyfile);
-    int Snn = atoi(Snnum);
-    unsigned char Sn[Snn];
-    fread(Sn, 1, Snn, keyfile);
-    fread(SMnum, 1, SMsize, keyfile);
-    int SMn = atoi(SMnum);
-    unsigned char SM[SMn];
-    fread(SM, 1, SMn, keyfile);
+        ctx->pk = BN_new();
+        ctx->n = BN_new();
+        ctx->M = BN_new();
+        Sctx->pk = BN_new();
+        Sctx->n = BN_new();
+        Sctx->M = BN_new();
+        int pksize = 4;
+        int nsize = 3;
+        int Msize = 3;
+        int Spksize = 4;
+        int Snsize = 3;
+        int SMsize = 3;
+        unsigned char *pknum[pksize];
+        unsigned char *nnum[nsize];
+        unsigned char *Mnum[nsize];
+        unsigned char *Spknum[pksize];
+        unsigned char *Snnum[nsize];
+        unsigned char *SMnum[nsize];
+        FILE *keyfile;
+        keyfile = fopen(filename, "rb");
+        fread(pknum, 1, pksize, keyfile);
+        int pkn = atoi(pknum);
+        unsigned char pk[pkn];
+        fread(pk, 1, pkn, keyfile);
+        fread(nnum, 1, nsize, keyfile);
+        int nn = atoi(nnum);
+        unsigned char n[nn];
+        fread(n, 1, nn, keyfile);
+        fread(Mnum, 1, Msize, keyfile);
+        int Mn = atoi(Mnum);
+        unsigned char M[Mn];
+        fread(M, 1, Mn, keyfile);
 
-    fclose(keyfile);
-    BN_bin2bn(pk, pkn, ctx->pk);
-    BN_bin2bn(n, nn, ctx->n);
-    BN_bin2bn(M, Mn, ctx->M);
-    BN_bin2bn(Spk, Spkn, Sctx->pk);
-    BN_bin2bn(Sn, Snn, Sctx->n);
-    BN_bin2bn(SM, SMn, Sctx->M);
+        fread(Spknum, 1, Spksize, keyfile);
+        int Spkn = atoi(Spknum);
+        unsigned char Spk[Spkn];
+        fread(Spk, 1, Spkn, keyfile);
+        fread(Snnum, 1, Snsize, keyfile);
+        int Snn = atoi(Snnum);
+        unsigned char Sn[Snn];
+        fread(Sn, 1, Snn, keyfile);
+        fread(SMnum, 1, SMsize, keyfile);
+        int SMn = atoi(SMnum);
+        unsigned char SM[SMn];
+        fread(SM, 1, SMn, keyfile);
+
+        fclose(keyfile);
+        BN_bin2bn(pk, pkn, ctx->pk);
+        BN_bin2bn(n, nn, ctx->n);
+        BN_bin2bn(M, Mn, ctx->M);
+        BN_bin2bn(Spk, Spkn, Sctx->pk);
+        BN_bin2bn(Sn, Snn, Sctx->n);
+        BN_bin2bn(SM, SMn, Sctx->M);
+        if ((BN_cmp(ctx->pk, z0) != 0) && (BN_cmp(ctx->n, z0) != 0) && (BN_cmp(ctx->M, z0) != 0) && (BN_cmp(Sctx->pk, z0) != 0) && (BN_cmp(Sctx->n, z0) != 0) && (BN_cmp(Sctx->M, z0) != 0)) {
+            good = 1;
+        }
+        if (c >= 3) {
+            printf("Error: Unable to load public key file\n");
+            exit(1);
+        }
+        c += 1;
+}
 /*
     const char *n_dec = BN_bn2dec(ctx->n);
     printf("n: %s\n", n_dec);
@@ -413,62 +429,80 @@ void load_pkfile(char *filename, struct qloq_ctx *ctx, struct qloq_ctx *Sctx) {
     const char *pk_dec2 = BN_bn2dec(Sctx->pk);
     printf("pk: %s\n", pk_dec2);
 */
+
 }
 
 void load_skfile(char *filename, struct qloq_ctx *ctx, struct qloq_ctx *Sctx) {
-    ctx->sk = BN_new();
-    ctx->n = BN_new();
-    ctx->M = BN_new();
-    Sctx->sk = BN_new();
-    Sctx->n = BN_new();
-    Sctx->M = BN_new();
-    int sksize = 4;
-    int nsize = 3;
-    int Msize = 3;
-    int Ssksize = 4;
-    int Snsize = 3;
-    int SMsize = 3;
-    unsigned char *sknum[sksize];
-    unsigned char *nnum[nsize];
-    unsigned char *Mnum[nsize];
-    unsigned char *Ssknum[Ssksize];
-    unsigned char *Snnum[Snsize];
-    unsigned char *SMnum[Snsize];
-    FILE *keyfile;
-    keyfile = fopen(filename, "rb");
-    fread(sknum, 1, sksize, keyfile);
-    int skn = atoi(sknum);
-    unsigned char sk[skn];
-    fread(sk, 1, skn, keyfile);
-    fread(nnum, 1, nsize, keyfile);
-    int nn = atoi(nnum);
-    unsigned char n[nn];
-    fread(n, 1, nn, keyfile);
-    fread(Mnum, 1, Msize, keyfile);
-    int Mn = atoi(Mnum);
-    unsigned char M[Mn];
-    fread(M, 1, Mn, keyfile);
+    int good = 0;
+    BIGNUM *z0;
+    z0 = BN_new();
+    BN_zero(z0);
+    int c = 0;
+    while (good == 0) {
+        BIGNUM *chk;
+        chk = BN_new();
+        ctx->sk = BN_new();
+        ctx->n = BN_new();
+        ctx->M = BN_new();
+        Sctx->sk = BN_new();
+        Sctx->n = BN_new();
+        Sctx->M = BN_new();
+        int sksize = 4;
+        int nsize = 3;
+        int Msize = 3;
+        int Ssksize = 4;
+        int Snsize = 3;
+        int SMsize = 3;
+        unsigned char *sknum[sksize];
+        unsigned char *nnum[nsize];
+        unsigned char *Mnum[nsize];
+        unsigned char *Ssknum[Ssksize];
+        unsigned char *Snnum[Snsize];
+        unsigned char *SMnum[Snsize];
+        FILE *keyfile;
+        keyfile = fopen(filename, "rb");
+        fread(sknum, 1, sksize, keyfile);
+        int skn = atoi(sknum);
+        unsigned char sk[skn];
+        fread(sk, 1, skn, keyfile);
+        fread(nnum, 1, nsize, keyfile);
+        int nn = atoi(nnum);
+        unsigned char n[nn];
+        fread(n, 1, nn, keyfile);
+        fread(Mnum, 1, Msize, keyfile);
+        int Mn = atoi(Mnum);
+        unsigned char M[Mn];
+        fread(M, 1, Mn, keyfile);
 
-    fread(Ssknum, 1, Ssksize, keyfile);
-    int Sskn = atoi(Ssknum);
-    unsigned char Ssk[Sskn];
-    fread(Ssk, 1, Sskn, keyfile);
-    fread(Snnum, 1, Snsize, keyfile);
-    int Snn = atoi(Snnum);
-    unsigned char Sn[Snn];
-    fread(Sn, 1, Snn, keyfile);
-    fread(SMnum, 1, SMsize, keyfile);
-    int SMn = atoi(SMnum);
-    unsigned char SM[SMn];
-    fread(SM, 1, SMn, keyfile);
+        fread(Ssknum, 1, Ssksize, keyfile);
+        int Sskn = atoi(Ssknum);
+        unsigned char Ssk[Sskn];
+        fread(Ssk, 1, Sskn, keyfile);
+        fread(Snnum, 1, Snsize, keyfile);
+        int Snn = atoi(Snnum);
+        unsigned char Sn[Snn];
+        fread(Sn, 1, Snn, keyfile);
+        fread(SMnum, 1, SMsize, keyfile);
+        int SMn = atoi(SMnum);
+        unsigned char SM[SMn];
+        fread(SM, 1, SMn, keyfile);
 
-    fclose(keyfile);
-    BN_bin2bn(sk, skn, ctx->sk);
-    BN_bin2bn(n, nn, ctx->n);
-    BN_bin2bn(M, Mn, ctx->M);
-    BN_bin2bn(Ssk, Sskn, Sctx->sk);
-    BN_bin2bn(Sn, Snn, Sctx->n);
-    BN_bin2bn(SM, SMn, Sctx->M);
+        fclose(keyfile);
+        BN_bin2bn(sk, skn, ctx->sk);
+        BN_bin2bn(n, nn, ctx->n);
+        BN_bin2bn(M, Mn, ctx->M);
+        BN_bin2bn(Ssk, Sskn, Sctx->sk);
+        BN_bin2bn(Sn, Snn, Sctx->n);
+        BN_bin2bn(SM, SMn, Sctx->M);
+        if ((BN_cmp(ctx->sk, z0) != 0) && (BN_cmp(ctx->n, z0) != 0) && (BN_cmp(ctx->M, z0) != 0) && (BN_cmp(Sctx->sk, z0) != 0) && (BN_cmp(Sctx->n, z0) != 0) && (BN_cmp(Sctx->M, z0) != 0)) {
+            good = 1;
+        }
+        if (c >= 3) {
+            printf("Error: Unable to load secret key file\n");
+            exit(1);
+        }
+        c += 1;
+    }
 /*
     const char *sk_dec = BN_bn2dec(ctx->sk);
     printf("sk: %s\n", sk_dec);

@@ -2,8 +2,6 @@
 
 *** For educational use only
 
-*** Requires libssl-dev1.1
-
 	DarkTomb is an authenticated file encryption program designed to allow two parties to exchange a file message using the public key algorithm QloQ and the symmetric algorithm AKMS in CBC mode (Advanced KryptoMagick Standard).  It works on Unix and Unix-like operating systems such as, Linux, FreeBSD and MacOS.  This document outlines the design of the program.
 
 Flow
@@ -26,9 +24,3 @@ Key Generation:  tomb-keygen username
 Encryption:  tomb akms-cbc -e msg msg.enc bob.pk alice.sk
 Decryption:  tomb akms-cbc -d msg.enc msg.dec alice.pk bob.sk
 
-*** Please install libssl-dev1.1
-
-On Ubuntu:
-
-wget http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.0g-2ubuntu4_amd64.deb
-sudo dpkg -i libssl1.1_1.1.0g-2ubuntu4_amd64.deb

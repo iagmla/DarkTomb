@@ -273,7 +273,7 @@ void akms_cbc_encrypt(char *inputfile, char *outputfile, char *pkfile, char *skf
         if ((b == (blocks - 1)) && (extra != 0)) {
             bufsize = extra;
             for (int p = 0; p < extrabytes; p++) {
-                block[(blocklen-1-p)] = (uint8_t *)extrabytes;
+                block[(blocklen-1-p)] = (uint8_t)extrabytes;
             }
         }
         fread(block, 1, bufsize, infile);

@@ -78,27 +78,27 @@ void akms_rotate_words_inv(struct akms_state *state) {
 }
 
 void akms_mix(struct akms_state *state) {
-    state->S[2] += state->S[3];
-    state->S[3] += state->S[2];
-    state->S[0] += state->S[1];
-    state->S[1] += state->S[0];
-
     state->S[0] += state->S[2];
     state->S[1] += state->S[3];
     state->S[2] += state->S[1];
     state->S[3] += state->S[0];
+
+    state->S[2] += state->S[3];
+    state->S[3] += state->S[2];
+    state->S[0] += state->S[1];
+    state->S[1] += state->S[0];
 }
 
 void akms_mix_inv(struct akms_state *state) {
-    state->S[3] -= state->S[0];
-    state->S[2] -= state->S[1];
-    state->S[1] -= state->S[3];
-    state->S[0] -= state->S[2];
-
     state->S[1] -= state->S[0];
     state->S[0] -= state->S[1];
     state->S[3] -= state->S[2];
     state->S[2] -= state->S[3];
+
+    state->S[3] -= state->S[0];
+    state->S[2] -= state->S[1];
+    state->S[1] -= state->S[3];
+    state->S[0] -= state->S[2];
 }
 
 void akms_add_key(struct akms_state *state, int r) {

@@ -1,7 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
+/* Advanced KryptoMagick Standard (AKMS) */
+/* by KryptoMagick (Karl Zander) */
+/* 256 bit key / 128 bit block size */
+/* 16 rounds */
 
 uint32_t akms_C0[4] = {0x91abd5d6, 0x8f339a27, 0xcad69edd, 0xe8df4b8c};
 
@@ -78,10 +78,10 @@ void akms_rotate_words_inv(struct akms_state *state) {
 }
 
 void akms_mix(struct akms_state *state) {
-    state->S[0] += state->S[2];
-    state->S[1] += state->S[3];
-    state->S[2] += state->S[1];
-    state->S[3] += state->S[0];
+    state->S[0] ^= state->S[2];
+    state->S[1] ^= state->S[3];
+    state->S[2] ^= state->S[1];
+    state->S[3] ^= state->S[0];
 
     state->S[2] += state->S[3];
     state->S[3] += state->S[2];
@@ -95,10 +95,10 @@ void akms_mix_inv(struct akms_state *state) {
     state->S[3] -= state->S[2];
     state->S[2] -= state->S[3];
 
-    state->S[3] -= state->S[0];
-    state->S[2] -= state->S[1];
-    state->S[1] -= state->S[3];
-    state->S[0] -= state->S[2];
+    state->S[3] ^= state->S[0];
+    state->S[2] ^= state->S[1];
+    state->S[1] ^= state->S[3];
+    state->S[0] ^= state->S[2];
 }
 
 void akms_add_key(struct akms_state *state, int r) {
@@ -132,11 +132,20 @@ void akms_ksa(struct akms_state *state, uint8_t *key, int rounds) {
     int c = 0;
     for (r = 1; r < rounds - 1; r++) {
         for (i = 0; i < 4; i++) {
-            state->S[i] ^= akms_rotl(state->T[i], 15) + akms_rotl(state->S[i], 14);
-            state->S[(i + 1) & 0x03] ^= akms_rotl(state->T[(i + 1) & 0x03], 10) + akms_rotl(state->S[(i + 1) & 0x03], 9);
-            state->S[(i + 2) & 0x03] ^= akms_rotl(state->T[(i + 2) & 0x03], 15) + akms_rotl(state->S[(i + 2) & 0x03], 21);
-            state->S[(i + 3) & 0x03] ^= akms_rotl(state->T[(i + 3) & 0x03], 12) + akms_rotl(state->S[(i + 3) & 0x03], 11);
+            state->S[i] ^= akms_rotl(state->T[i], 15) + akms_rotl(state->S[i+ 3], 14);
+            state->S[i + 1] ^= akms_rotl(state->T[i + 1], 10) + akms_rotl(state->S[i], 9);
+            state->S[i + 2] ^= akms_rotl(state->T[i + 2], 15) + akms_rotl(state->S[i + 1], 21);
+            state->S[i + 3] ^= akms_rotl(state->T[i + 3], 12) + akms_rotl(state->S[i + 2], 11);
+
+            state->T[i] ^= akms_rotl(state->S[i], 15) + akms_rotl(state->T[i + 2], 14);
+            state->T[i + 1] ^= akms_rotl(state->S[i + 1], 15) + akms_rotl(state->T[i + 3], 14);
+            state->T[i + 2] ^= akms_rotl(state->S[i + 2], 10) + akms_rotl(state->T[i], 9);
+            state->T[i + 3] ^= akms_rotl(state->S[i + 3], 12) + akms_rotl(state->T[i + 1], 11);
+
             state->K[r][i] = state->S[i];
+            state->K[r][i + 1] = state->S[i + 1];
+            state->K[r][i + 2] = state->S[i + 2];
+            state->K[r][i + 3] = state->S[i + 3];
         }
     }
 

@@ -128,27 +128,24 @@ void akms_ksa(struct akms_state *state, uint8_t *key, int rounds) {
     state->T[2] = state->K[15][2];
     state->T[3] = state->K[15][3];
 
-    int r, i;
-    int c = 0;
-    for (r = 1; r < rounds - 1; r++) {
-        for (i = 0; i < 4; i++) {
-            state->S[i] ^= akms_rotl(state->T[i], 15) + akms_rotl(state->S[i+ 3], 14);
-            state->S[i + 1] ^= akms_rotl(state->T[i + 1], 10) + akms_rotl(state->S[i], 9);
-            state->S[i + 2] ^= akms_rotl(state->T[i + 2], 15) + akms_rotl(state->S[i + 1], 21);
-            state->S[i + 3] ^= akms_rotl(state->T[i + 3], 12) + akms_rotl(state->S[i + 2], 11);
+    int i = 0;
+    for (int r = 1; r < rounds - 1; r++) {
+        state->S[i & 0x03] ^= akms_rotl(state->T[i & 0x03], 15) + akms_rotl(state->S[(i + 3) & 0x03], 14);
+        state->S[(i + 1) & 0x03] ^= akms_rotl(state->T[(i + 1) & 0x03], 10) + akms_rotl(state->S[(i + 2) & 0x03], 9);
+        state->S[(i + 2) & 0x03] ^= akms_rotl(state->T[(i + 2) & 0x03], 15) + akms_rotl(state->S[i & 0x03], 21);
+        state->S[(i + 3) & 0x03] ^= akms_rotl(state->T[(i + 3) & 0x03], 12) + akms_rotl(state->S[(i + 1) & 0x03], 11);
 
-            state->T[i] ^= akms_rotl(state->S[i], 15) + akms_rotl(state->T[i + 2], 14);
-            state->T[i + 1] ^= akms_rotl(state->S[i + 1], 15) + akms_rotl(state->T[i + 3], 14);
-            state->T[i + 2] ^= akms_rotl(state->S[i + 2], 10) + akms_rotl(state->T[i], 9);
-            state->T[i + 3] ^= akms_rotl(state->S[i + 3], 12) + akms_rotl(state->T[i + 1], 11);
+        state->T[i & 0x03] ^= akms_rotl(state->S[i & 0x03], 15) + akms_rotl(state->T[(i + 3) & 0x03], 14);
+        state->T[(i + 1) & 0x03] ^= akms_rotl(state->S[(i + 1) & 0x03], 15) + akms_rotl(state->T[i & 0x03], 14);
+        state->T[(i + 2) & 0x03] ^= akms_rotl(state->S[(i + 2) & 0x03], 10) + akms_rotl(state->T[(i + 1) & 0x03], 9);
+        state->T[(i + 3) & 0x03] ^= akms_rotl(state->S[(i + 3) & 0x03], 12) + akms_rotl(state->T[(i + 2) & 0x03], 11);
 
-            state->K[r][i] = state->S[i];
-            state->K[r][i + 1] = state->S[i + 1];
-            state->K[r][i + 2] = state->S[i + 2];
-            state->K[r][i + 3] = state->S[i + 3];
-        }
+        state->K[r][0] = state->S[0];
+        state->K[r][1] = state->S[1];
+        state->K[r][2] = state->S[2];
+        state->K[r][3] = state->S[3];
+        i += 1;
     }
-
 }
 
 void akms_encrypt_block(struct akms_state *state, int rounds) {

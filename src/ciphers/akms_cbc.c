@@ -25,7 +25,6 @@ uint32_t akms_rotr(uint32_t a, int b) {
     return ((a >> b) | (a << (32 - b)));
 }
 
-
 void akms_sub(struct akms_state *state) {
     state->S[0] = ((uint32_t)(akms_S0[(state->S[0] & 0xFF000000) >> 24] << 24) + ((uint32_t)akms_S0[(state->S[0] & 0x00FF0000) >> 16] << 16) + ((uint32_t)akms_S0[(state->S[0] & 0x0000FF00) >> 8] << 8) + ((uint32_t)akms_S0[(state->S[0] & 0x000000FF)]));
     state->S[1] = ((uint32_t)(akms_S0[(state->S[1] & 0xFF000000) >> 24] << 24) + ((uint32_t)akms_S0[(state->S[1] & 0x00FF0000) >> 16] << 16) + ((uint32_t)akms_S0[(state->S[1] & 0x0000FF00) >> 8] << 8) + ((uint32_t)akms_S0[(state->S[1] & 0x000000FF)]));
@@ -293,9 +292,10 @@ void akms_cbc_encrypt(char *inputfile, char *outputfile, char *pkfile, char *skf
     fclose(infile);
     fclose(outfile);
     uint8_t kdf_key[32];
+    uint8_t hmac_hash[32];
     qx_kdf(key, 32, kdf_key, 10000);
-    qx_hmac_file_write(outputfile, kdf_key);
-    sign_hash_write(&Sctx, outputfile);
+    qx_hmac_file_write(outputfile, kdf_key, hmac_hash);
+    sign_hash_write(&Sctx, outputfile, hmac_hash);
 }
 
 void akms_cbc_decrypt(char *inputfile, char *outputfile, char *pkfile, char *skfile) {
@@ -305,7 +305,17 @@ void akms_cbc_decrypt(char *inputfile, char *outputfile, char *pkfile, char *skf
     struct qloq_ctx TMPBctx;
     load_pkfile(pkfile, &TMPActx, &Sctx);
     load_skfile(skfile, &ctx, &TMPBctx);
-    verify_sig_read(&Sctx, inputfile);
+    uint8_t hmac_hash[32];
+    FILE *infile, *outfile;
+    infile = fopen(inputfile, "rb");
+    fseek(infile, 0, SEEK_END);
+    uint32_t datalen = ftell(infile);
+    fseek(infile, 0, SEEK_SET);
+    fseek(infile, datalen - 768 - 32 - 32, SEEK_SET);
+    fread(hmac_hash, 1, 32, infile);
+    fclose(infile);
+
+    verify_sig_read(&Sctx, inputfile, hmac_hash);
     uint8_t key[32];
     uint8_t key_padded[32];
     uint8_t pad_nonce[32];
@@ -315,10 +325,9 @@ void akms_cbc_decrypt(char *inputfile, char *outputfile, char *pkfile, char *skf
     state.rounds = 16;
     int blocklen = 16;
     uint8_t iv[blocklen];
-    FILE *infile, *outfile;
     infile = fopen(inputfile, "rb");
     fseek(infile, 0, SEEK_END);
-    uint32_t datalen = ftell(infile);
+    datalen = ftell(infile);
     datalen = datalen - blocklen - 768 - 32 - 32 - 768 - 32;
     fseek(infile, 0, SEEK_SET);
     fread(pad_nonce, 1, 32, infile);
